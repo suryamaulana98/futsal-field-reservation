@@ -12,17 +12,55 @@ Project Laravel 12 untuk sistem reservasi futsal dengan dua sisi tampilan:
 - Halaman admin: `resources/views/pages/admin`
 - Aset statis: `public/assets`
 
-## Menjalankan Project (Local)
+## Menjalankan Project (Local) - Langkah demi Langkah
 
-1. Buat file `.env` dari `.env.example` bila belum ada.
-2. Generate app key:
-    ```
-    php artisan key:generate
-    ```
-3. Jalankan server:
-    ```
-    php artisan serve
-    ```
+### 1) Prasyarat
+
+- PHP 8.2+ dan Composer sudah terpasang.
+- Node.js (opsional, hanya jika ingin build asset Vite).
+
+### 2) Install dependency
+
+```
+composer install
+```
+
+### 3) Buat file environment
+
+```
+copy .env.example .env
+```
+
+### 4) Generate app key
+
+```
+php artisan key:generate
+```
+
+### 5) (Opsional) Konfigurasi database
+
+Jika ingin memakai database, atur konfigurasi `DB_*` di `.env`, lalu jalankan:
+
+```
+php artisan migrate
+```
+
+### 6) Jalankan server
+
+```
+php artisan serve
+```
+
+Project akan berjalan di http://127.0.0.1:8000
+
+### 7) (Opsional) Build asset Vite
+
+Jika menggunakan Vite (bukan asset statis di `public/assets`):
+
+```
+npm install
+npm run dev
+```
 
 ## Catatan
 
