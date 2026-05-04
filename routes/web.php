@@ -1,10 +1,13 @@
 <?php
 
+
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'pages.user.index');
 Route::view('/login', 'pages.user.login');
 Route::view('/register', 'pages.user.register');
+Route::post('/proses-rergister', [\App\Http\Controllers\AuthController::class, 'prosesRegister'])->name('proses-register');
+Route::post('/proses-login', [\App\Http\Controllers\AuthController::class, 'prosesLogin'])->name('proses-login');
 Route::view('/reservasi', 'pages.user.reservasi');
 
 Route::prefix('admin')->group(function () {
