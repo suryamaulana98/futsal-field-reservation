@@ -134,7 +134,7 @@
                         <div class="col-12">
                             <label class="form-label fw-bold" for="registerName">Nama </label>
                             <input class="form-control form-control-lg" id="nama" name="nama" type="text"
-                                placeholder="Contoh: Raden Mas Surya" />
+                                placeholder="Contoh: Mr. X" />
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold" for="registerPhone">No. HP</label>

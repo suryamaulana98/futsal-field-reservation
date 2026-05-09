@@ -14,12 +14,12 @@
     </button>
     <div class="collapse navbar-collapse" id="dashNav">
       <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
-        <li class="nav-item">
+        {{-- <li class="nav-item">
           <a class="btn btn-outline-dark rounded-pill px-3" href="{{ url('/login') }}">Login</a>
         </li>
         <li class="nav-item">
           <a class="btn btn-outline-dark rounded-pill px-3" href="{{ url('/register') }}">Register</a>
-        </li>
+        </li> --}}
         <li class="nav-item">
           <a class="nav-link" href="#step-1">Reservasi</a>
         </li>

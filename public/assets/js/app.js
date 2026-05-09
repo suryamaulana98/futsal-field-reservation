@@ -5,6 +5,7 @@ const btnBatal = document.getElementById("btnBatal");
 const estimasiTotal = document.getElementById("estimasiTotal");
 const buktiReservasi = document.getElementById("buktiReservasi");
 const buktiReservasiInfo = document.getElementById("buktiReservasiInfo");
+const summaryListFinal = document.getElementById("summaryListFinal");
 const paketMember = document.getElementById("paketMember");
 const estimasiMember = document.getElementById("estimasiMember");
 const buktiMembership = document.getElementById("buktiMembership");
@@ -12,120 +13,239 @@ const buktiMembershipInfo = document.getElementById("buktiMembershipInfo");
 const btnDaftarMembership = document.getElementById("btnDaftarMembership");
 const namaPIC = document.getElementById("namaPIC");
 const kontakPIC = document.getElementById("kontakPIC");
+const stepItems = document.querySelectorAll(".step-item[data-step]");
+const stepPanels = document.querySelectorAll(".step-panel[data-step]");
+const btnToConfirm = document.getElementById("btnToConfirm");
+const btnBackToStep1 = document.getElementById("btnBackToStep1");
+const btnBackToStep2 = document.getElementById("btnBackToStep2");
+const btnResetBooking = document.getElementById("btnResetBooking");
+const catatanPreview = document.getElementById("catatanPreview");
+const bookingStatusText = document.getElementById("bookingStatusText");
+const bookingStatusBadge = document.getElementById("bookingStatusBadge");
 
-const hargaPerJam = {
-  "08:00": 120000,
-  "10:00": 120000,
-  "14:00": 150000,
-  "18:00": 200000,
-  "20:00": 200000,
-};
+const hargaFlat = 120000;
 
-function hitungEstimasi(jam, durasi) {
-  const hargaDasar = hargaPerJam[jam] || 120000;
-  return hargaDasar * Number(durasi || 1);
+function hitungEstimasi() {
+    return hargaFlat;
 }
 
 function formatRupiah(nominal) {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    maximumFractionDigits: 0,
-  }).format(nominal);
+    return new Intl.NumberFormat("id-ID", {
+        style: "currency",
+        currency: "IDR",
+        maximumFractionDigits: 0,
+    }).format(nominal);
 }
 
 function tampilkanNamaFile(inputFile, targetInfo) {
-  if (!targetInfo) {
-    return;
-  }
+    if (!targetInfo) {
+        return;
+    }
 
-  const fileName = inputFile?.files?.[0]?.name;
-  targetInfo.textContent = fileName
-    ? `File dipilih: ${fileName}`
-    : "Belum ada file dipilih.";
+    const fileName = inputFile?.files?.[0]?.name;
+    targetInfo.textContent = fileName
+        ? `File dipilih: ${fileName}`
+        : "Belum ada file dipilih.";
 }
 
 function setSummary(statusText) {
-  const tanggal = document.getElementById("tanggalMain")?.value || "-";
-  const jam = document.getElementById("jamMain")?.value || "-";
-  const durasi = document.getElementById("durasiMain")?.value || "-";
-  const lapangan = document.getElementById("lapangan")?.value || "-";
-  const estimasi = hitungEstimasi(jam, durasi);
+    const tanggal = document.getElementById("tanggalMain")?.value || "-";
+    const jam = document.getElementById("jamMain")?.value || "-";
+    const durasi = document.getElementById("durasiMain")?.value || "-";
+    const estimasi = hitungEstimasi();
 
-  if (!summaryList) {
-    return;
-  }
+    if (!summaryList) {
+        return;
+    }
 
-  summaryList.innerHTML = [
-    `<li>Tanggal: ${tanggal}</li>`,
-    `<li>Jam: ${jam}</li>`,
-    `<li>Durasi: ${durasi} jam</li>`,
-    `<li>Lapangan: ${lapangan}</li>`,
-    `<li>Status: ${statusText}</li>`,
-  ].join("");
+    summaryList.innerHTML = [
+        `<li class="mb-2">Tanggal: <span class="badge text-bg-success ms-1">${tanggal}</span></li>`,
+        `<li class="mb-2">Jam: <span class="badge text-bg-primary ms-1">${jam}</span></li>`,
+        `<li class="mb-2">Durasi: <span class="badge text-bg-info ms-1">${durasi} jam</span></li>`,
+        `<li class="mb-2">Harga: <span class="badge text-bg-dark ms-1">${formatRupiah(estimasi)}</span></li>`,
+        `<li>Status: <span class="badge text-bg-warning ms-1">${statusText}</span></li>`,
+    ].join("");
 
-  if (estimasiTotal) {
-    estimasiTotal.textContent = formatRupiah(estimasi);
-  }
+    if (estimasiTotal) {
+        estimasiTotal.textContent = formatRupiah(estimasi);
+    }
+
+    if (summaryListFinal) {
+        summaryListFinal.innerHTML = [
+            `<li class="mb-2">Tanggal: <span class="badge text-bg-success ms-1">${tanggal}</span></li>`,
+            `<li class="mb-2">Jam: <span class="badge text-bg-primary ms-1">${jam}</span></li>`,
+            `<li class="mb-2">Durasi: <span class="badge text-bg-info ms-1">${durasi} jam</span></li>`,
+            `<li class="mb-2">Harga: <span class="badge text-bg-dark ms-1">${formatRupiah(estimasi)}</span></li>`,
+            `<li>Status: <span class="badge text-bg-warning ms-1">${statusText}</span></li>`,
+        ].join("");
+    }
 }
 
-["tanggalMain", "jamMain", "durasiMain", "lapangan"].forEach((id) => {
-  const element = document.getElementById(id);
-  element?.addEventListener("change", () => {
-    setSummary("Menunggu konfirmasi");
-  });
+function updateCatatanPreview() {
+    if (!catatanPreview) {
+        return;
+    }
+
+    const catatanValue = document.getElementById("catatan")?.value?.trim();
+    catatanPreview.textContent = catatanValue || "-";
+}
+
+const stepState = {
+    current: 1,
+    max: 1,
+};
+
+function setStep(step) {
+    if (!stepPanels.length || !stepItems.length) {
+        return;
+    }
+
+    const nextStep = Number(step);
+    if (Number.isNaN(nextStep) || nextStep < 1 || nextStep > 4) {
+        return;
+    }
+
+    if (nextStep > stepState.max) {
+        return;
+    }
+
+    stepState.current = nextStep;
+    stepPanels.forEach((panel) => {
+        const panelStep = Number(panel.dataset.step || 0);
+        panel.classList.toggle("is-active", panelStep === nextStep);
+    });
+
+    stepItems.forEach((item) => {
+        const itemStep = Number(item.dataset.step || 0);
+        item.classList.toggle("active", itemStep === nextStep);
+        item.disabled = itemStep > stepState.max;
+    });
+}
+
+function setMaxStep(step) {
+    const nextMax = Math.max(stepState.max, Number(step));
+    stepState.max = Math.min(nextMax, 4);
+    setStep(stepState.current);
+}
+
+function setStatus(text, badgeClass) {
+    if (bookingStatusText) {
+        bookingStatusText.textContent = text;
+    }
+    if (bookingStatusBadge) {
+        bookingStatusBadge.className = `badge ${badgeClass}`;
+    }
+}
+
+["tanggalMain", "jamMain", "durasiMain"].forEach((id) => {
+    const element = document.getElementById(id);
+    element?.addEventListener("change", () => {
+        setSummary("Menunggu konfirmasi");
+    });
 });
 
+document
+    .getElementById("catatan")
+    ?.addEventListener("input", updateCatatanPreview);
+
 setSummary("Menunggu konfirmasi");
+updateCatatanPreview();
+setStep(1);
 
 paketMember?.addEventListener("change", () => {
-  if (estimasiMember) {
-    estimasiMember.textContent = formatRupiah(Number(paketMember.value || 0));
-  }
+    if (estimasiMember) {
+        estimasiMember.textContent = formatRupiah(
+            Number(paketMember.value || 0),
+        );
+    }
 });
 
 buktiReservasi?.addEventListener("change", () => {
-  tampilkanNamaFile(buktiReservasi, buktiReservasiInfo);
+    tampilkanNamaFile(buktiReservasi, buktiReservasiInfo);
 });
 
 buktiMembership?.addEventListener("change", () => {
-  tampilkanNamaFile(buktiMembership, buktiMembershipInfo);
+    tampilkanNamaFile(buktiMembership, buktiMembershipInfo);
 });
 
 if (estimasiMember && paketMember) {
-  estimasiMember.textContent = formatRupiah(Number(paketMember.value || 0));
+    estimasiMember.textContent = formatRupiah(Number(paketMember.value || 0));
 }
 
 btnKonfirmasi?.addEventListener("click", () => {
-  setSummary("Pesanan terkonfirmasi");
-  alert("Pesanan berhasil dikonfirmasi. Lanjutkan ke pembayaran.");
+    setSummary("Pesanan terkonfirmasi");
+    setMaxStep(3);
+    setStep(3);
 });
 
 btnBayar?.addEventListener("click", () => {
-  if (!buktiReservasi?.files?.length) {
-    alert("Silakan upload bukti pembayaran reservasi terlebih dahulu.");
-    return;
-  }
+    if (!buktiReservasi?.files?.length) {
+        alert("Silakan upload bukti pembayaran reservasi terlebih dahulu.");
+        return;
+    }
 
-  setSummary("Pembayaran berhasil");
-  alert("Pembayaran berhasil. Booking kamu sudah aktif.");
+    setSummary("Pembayaran berhasil");
+    setStatus("Pembayaran berhasil. Booking kamu aktif.", "text-bg-success");
+    setMaxStep(4);
+    setStep(4);
 });
 
 btnBatal?.addEventListener("click", () => {
-  setSummary("Pesanan dibatalkan");
-  alert("Pesanan dibatalkan.");
+    setSummary("Pesanan dibatalkan");
+    setStatus(
+        "Pesanan dibatalkan. Silakan pilih jadwal baru.",
+        "text-bg-danger",
+    );
+    setMaxStep(4);
+    setStep(4);
+});
+
+btnToConfirm?.addEventListener("click", () => {
+    const tanggal = document.getElementById("tanggalMain")?.value;
+    if (!tanggal) {
+        alert("Silakan pilih tanggal main terlebih dahulu.");
+        return;
+    }
+
+    updateCatatanPreview();
+    setSummary("Menunggu konfirmasi");
+    setMaxStep(2);
+    setStep(2);
+});
+
+btnBackToStep1?.addEventListener("click", () => {
+    setStep(1);
+});
+
+btnBackToStep2?.addEventListener("click", () => {
+    setStep(2);
+});
+
+btnResetBooking?.addEventListener("click", () => {
+    setStatus("Pembayaran berhasil. Booking kamu aktif.", "text-bg-success");
+    setSummary("Menunggu konfirmasi");
+    stepState.max = 1;
+    setStep(1);
+});
+
+stepItems.forEach((item) => {
+    item.addEventListener("click", () => {
+        setStep(item.dataset.step);
+    });
 });
 
 btnDaftarMembership?.addEventListener("click", () => {
-  if (!namaPIC?.value.trim() || !kontakPIC?.value.trim()) {
-    alert("Lengkapi nama PIC dan kontak PIC terlebih dahulu.");
-    return;
-  }
+    if (!namaPIC?.value.trim() || !kontakPIC?.value.trim()) {
+        alert("Lengkapi nama PIC dan kontak PIC terlebih dahulu.");
+        return;
+    }
 
-  if (!buktiMembership?.files?.length) {
-    alert("Silakan upload bukti pembayaran membership terlebih dahulu.");
-    return;
-  }
+    if (!buktiMembership?.files?.length) {
+        alert("Silakan upload bukti pembayaran membership terlebih dahulu.");
+        return;
+    }
 
-  alert("Pendaftaran membership berhasil dikirim. Menunggu verifikasi admin.");
+    alert(
+        "Pendaftaran membership berhasil dikirim. Menunggu verifikasi admin.",
+    );
 });

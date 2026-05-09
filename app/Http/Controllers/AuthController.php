@@ -19,7 +19,7 @@ class AuthController extends Controller
         ]);
 
         // dd($validatedData);
-        
+
         // Simpan data pengguna ke database
         $user = \App\Models\User::create([
             'nama' => $validatedData['nama'],
@@ -41,7 +41,13 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            return redirect('/reservasi')->with('success', 'Login berhasil. Selamat datang! ' . Auth::user()->nama);
+            $user = Auth::user();
+            $redirectTo = $user && $user->role === 'admin' ? '/admin/dashboard' : '/reservasi';
+
+            return redirect($redirectTo)->with(
+                'success',
+                'Login berhasil. Selamat datang! ' . $user->nama
+            );
         }
 
         return back()->withErrors([
