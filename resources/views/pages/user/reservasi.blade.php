@@ -226,9 +226,9 @@
                         @if(Auth::user() && Auth::user()->membership_status === 'active' && Auth::user()->status_member == 1)
                             <br><span class="text-success fw-bold"><i class="bi bi-tags-fill"></i> Member Aktif!
                                 @if(!Auth::user()->membership_free_hour_used)
-                                    Anda memiliki <u>FREE 1 JAM</u> (voucher sekali pakai) yang akan otomatis diterapkan.
+                                    Anda memiliki <u>FREE 1 JAM</u> (voucher sekali pakai) + <u>Diskon 15%</u> yang akan otomatis diterapkan.
                                 @else
-                                    Voucher free 1 jam sudah digunakan.
+                                    Voucher free 1 jam sudah digunakan. <u>Diskon 15%</u> tetap aktif setiap reservasi.
                                 @endif
                             </span>
                         @endif
@@ -361,6 +361,9 @@
                                         <button class="btn btn-dark" id="btnBayar" type="button">
                                             Upload Bukti & Bayar
                                         </button>
+                                        <button class="btn btn-outline-danger" id="btnBatalPembayaran" type="button">
+                                            Batalkan Pembayaran
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -392,6 +395,11 @@
                                         Estimasi Total
                                         <strong id="estimasiTotal">Rp120.000</strong>
                                     </div>
+                                    @if(Auth::user() && Auth::user()->membership_status === 'active' && Auth::user()->status_member == 1 && !Auth::user()->membership_free_hour_used)
+                                        <div class="alert alert-success py-2 small mb-0" id="voucherUsedInfo">
+                                            <i class="bi bi-gift-fill me-1"></i> <strong>Voucher Free 1 Jam berhasil digunakan!</strong> Potongan 1 jam gratis telah diterapkan pada pesanan ini.
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                             <div class="step-panel" data-step="3">
@@ -558,6 +566,7 @@
                                         <strong>Keuntungan Member:</strong>
                                         <ul class="mb-0 mt-1">
                                             <li>Free 1 jam bermain (voucher sekali pakai selama masa membership)</li>
+                                            <li><strong>Diskon 15%</strong> untuk setiap reservasi selama masa aktif</li>
                                             <li>Masa aktif 3 bulan</li>
                                             <li>Prioritas konfirmasi booking</li>
                                         </ul>
@@ -584,6 +593,7 @@
                                     <li>Paket: <b>Member Jaya Futsal</b></li>
                                     <li>Masa Aktif: <b>3 Bulan</b></li>
                                     <li>Benefit: <b>Free 1 Jam (sekali pakai)</b></li>
+                                    <li>Benefit: <b>Diskon 15% setiap reservasi</b></li>
                                 </ul>
                                 <div class="estimated-total mb-3">
                                     Total Harga
@@ -631,6 +641,8 @@
     <script>
         // Set flag member free hour (untuk kalkulasi harga di frontend)
         window.MEMBER_FREE_HOUR = {{ (Auth::user() && Auth::user()->membership_status === 'active' && Auth::user()->status_member == 1 && !Auth::user()->membership_free_hour_used) ? 'true' : 'false' }};
+        // Set flag member discount 15% (untuk kalkulasi harga di frontend)
+        window.MEMBER_DISCOUNT = {{ (Auth::user() && Auth::user()->membership_status === 'active' && Auth::user()->status_member == 1 && Auth::user()->membership_expires_at && \Carbon\Carbon::parse(Auth::user()->membership_expires_at)->isFuture()) ? 'true' : 'false' }};
     </script>
     <script src="{{ asset('assets/js/app.js') }}"></script>
     <script>
@@ -650,6 +662,27 @@
             let tawaranModal = null;
             
             const isUserMember = {{ (empty(Auth::user()->membership_type) || Auth::user()->membership_status === 'rejected') ? 'false' : 'true' }};
+
+            // Cek apakah ada request dari landing page untuk daftar membership
+            const urlParams = new URLSearchParams(window.location.search);
+            const showMembership = urlParams.get('show_membership');
+
+            if (showMembership === '1' && !isUserMember) {
+                // Tampilkan form membership tanpa membuat reservasi
+                const mForm = document.getElementById('membership-form');
+                mForm.classList.remove('d-none');
+                
+                // Beri sedikit jeda agar DOM siap sebelum scroll
+                setTimeout(() => {
+                    mForm.scrollIntoView({ behavior: 'smooth' });
+                }, 500);
+                
+                // Nonaktifkan tombol booking agar fokus daftar
+                if(btnKonfirmasi) btnKonfirmasi.disabled = true;
+                
+                // Bersihkan URL dari parameter agar tidak loop saat refresh
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
 
             // --- 1. Buat Pesanan ---
             btnKonfirmasi?.addEventListener('click', async () => {
@@ -861,6 +894,39 @@
                 }
             });
 
+            // --- 3b. Batal Pembayaran (dari Step 3) ---
+            document.getElementById('btnBatalPembayaran')?.addEventListener('click', async () => {
+                const reservasiId = reservasiIdInput.value;
+                if (!reservasiId) {
+                    alert('Reservasi belum dibuat (ID kosong).');
+                    return;
+                }
+
+                if (!confirm('Yakin ingin membatalkan pembayaran? Reservasi akan dibatalkan.')) return;
+
+                try {
+                    const res = await fetch(`{{ url('/reservasi') }}/${reservasiId}/batal`, {
+                        method: 'POST',
+                        headers: { 
+                            'X-CSRF-TOKEN': getCsrf(),
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok) {
+                        alert(data.message || 'Gagal membatalkan.');
+                        return;
+                    }
+                    toastr.success('Pembayaran berhasil dibatalkan.');
+                    setTimeout(() => {
+                        window.location.href = '{{ route("reservasi.index") }}';
+                    }, 1500);
+                } catch (err) {
+                    console.error(err);
+                }
+            });
+
             // --- 4. Cek Ketersediaan Jadwal AJAX ---
             const tanggalMainInput = document.getElementById('tanggalMain');
             const jamSelesaiSelect = document.getElementById('jamSelesaiMain');
@@ -996,22 +1062,30 @@
                 for (let i = startIndex + 1; i <= jadwalOperasional.length; i++) {
                     if (curDurasi > maxDurasi) break;
                     
-                    // Kita bisa ambil jam selanjutnya. Jika mencapai jam penutup (misal index out of bound), kita gunakan jam + 1.
                     let jamSelesaiStr = '';
                     if (i < jadwalOperasional.length) {
-                        // Cek apakah slot jam ini tersedia, kalau penuh langsung break (tidak bisa di-book sampai sini)
-                        if (jadwalOperasional[i].status !== 'Tersedia') break;
                         jamSelesaiStr = jadwalOperasional[i].jam;
+                        
+                        // Tambahkan option ini DULU. Karena ini merepresentasikan 
+                        // AKHIR dari slot sebelumnya yang sudah dipastikan tersedia.
+                        const opt = document.createElement('option');
+                        opt.value = jamSelesaiStr;
+                        opt.textContent = `${jamSelesaiStr} (${curDurasi} Jam)`;
+                        jamSelesaiSelect.appendChild(opt);
+                        
+                        // Setelah ditambahkan, baru cek apakah slot ini (mulai jam i) tersedia?
+                        // Kalau tidak tersedia, break agar tidak bisa lanjut ke durasi berikutnya.
+                        if (jadwalOperasional[i].status !== 'Tersedia') break;
                     } else {
                         // Hitung manual untuk jam tutup (setelah slot terakhir)
                         let lastJam = parseInt(jadwalOperasional[i-1].jam.split(':')[0]);
                         jamSelesaiStr = (lastJam + 1).toString().padStart(2, '0') + ':00';
+                        
+                        const opt = document.createElement('option');
+                        opt.value = jamSelesaiStr;
+                        opt.textContent = `${jamSelesaiStr} (${curDurasi} Jam)`;
+                        jamSelesaiSelect.appendChild(opt);
                     }
-                    
-                    const opt = document.createElement('option');
-                    opt.value = jamSelesaiStr;
-                    opt.textContent = `${jamSelesaiStr} (${curDurasi} Jam)`;
-                    jamSelesaiSelect.appendChild(opt);
                     
                     curDurasi++;
                 }

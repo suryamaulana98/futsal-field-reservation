@@ -18,6 +18,7 @@ class Reservasi extends Model
         'jam_mulai',
         'jam_selesai',
         'total_harga',
+        'discount_amount',
         'status',
         'metode_pembayaran',
         'bukti_pembayaran',

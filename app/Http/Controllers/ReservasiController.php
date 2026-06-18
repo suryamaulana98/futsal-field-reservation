@@ -83,8 +83,8 @@ class ReservasiController extends Controller
 
         $validatedData = $request->validate([
             'tanggal' => 'required|date',
-            'jam_mulai' => ['required', 'regex:/^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/'],
-            'jam_selesai' => ['required', 'regex:/^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/', 'after:jam_mulai'],
+            'jam_mulai' => ['required', 'regex:/^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$|^24:00(:00)?$/'],
+            'jam_selesai' => ['required', 'regex:/^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$|^24:00(:00)?$/', 'after:jam_mulai'],
             'catatan' => 'nullable|string|max:500',
         ]);
 
@@ -127,19 +127,17 @@ class ReservasiController extends Controller
             $totalHarga += ($jam < 17) ? 60000 : 70000;
         }
 
-        // === CEK MEMBERSHIP: FREE 1 JAM (VOUCHER SEKALI PAKAI) ===
+        // === CEK MEMBERSHIP: FREE 1 JAM + DISKON 15% ===
         $user = Auth::user();
         $freeHourApplied = false;
+        $discountAmount = 0;
+
         if ($user && $user->membership_status === 'active' && $user->status_member == '1') {
-            // Auto-deactivate jika 3 bulan tidak booking
-            if ($user->membership_last_booking_at && Carbon::parse($user->membership_last_booking_at)->addMonths(3)->isPast()) {
-                $user->membership_status = 'expired';
-                $user->status_member = '0';
-                $user->save();
-            } else {
-                // Terapkan free 1 jam jika belum dipakai
+            // Cek apakah membership masih berlaku (belum expired)
+            if ($user->membership_expires_at && Carbon::parse($user->membership_expires_at)->isFuture()) {
+
+                // 1. Terapkan Free 1 Jam jika belum dipakai
                 if (!$user->membership_free_hour_used) {
-                    // Kurangi 1 jam termahal dari total
                     $jamTerMahal = 0;
                     for ($jam = $jamMulaiInt; $jam < $jamSelesaiInt; $jam++) {
                         $hargaJam = ($jam < 17) ? 60000 : 70000;
@@ -149,6 +147,18 @@ class ReservasiController extends Controller
                     if ($totalHarga < 0) $totalHarga = 0;
                     $freeHourApplied = true;
                 }
+
+                // 2. Terapkan Diskon 15% pada sisa harga
+                if ($totalHarga > 0) {
+                    $discountAmount = round($totalHarga * 0.15);
+                    $totalHarga -= $discountAmount;
+                }
+
+            } else {
+                // Membership sudah expired, nonaktifkan
+                $user->membership_status = 'expired';
+                $user->status_member = '0';
+                $user->save();
             }
         }
 
@@ -158,6 +168,7 @@ class ReservasiController extends Controller
             'jam_mulai' => $validatedData['jam_mulai'],
             'jam_selesai' => $validatedData['jam_selesai'],
             'total_harga' => $totalHarga,
+            'discount_amount' => $discountAmount,
             'status' => 'menunggu',
             'catatan' => $validatedData['catatan'],
         ]);
@@ -276,7 +287,7 @@ class ReservasiController extends Controller
 
         $jamOperasional = [];
         $start = 7; // Buka jam 07:00
-        $end = 23; // Tutup jam 23:00
+        $end = 22; // Batas jam mulai terakhir adalah 22:00 (selesai 23:00)
 
         $today = now()->format('Y-m-d');
         $currentHour = (int) now()->format('H');

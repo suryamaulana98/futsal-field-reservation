@@ -34,10 +34,23 @@ class DashboardController extends Controller
                 'status_member' => '0',
             ]);
 
-        $totalPendapatanBulanIni = Reservasi::whereIn('status', ['disetujui', 'selesai', 'dibayar'])
+        $totalPendapatanReservasi = Reservasi::whereIn('status', ['disetujui', 'selesai', 'dibayar'])
             ->whereMonth('tanggal', $today->month)
             ->whereYear('tanggal', $today->year)
             ->sum('total_harga');
+
+        // Hitung pendapatan membership bulan ini (Biaya Rp 150.000 per member)
+        // Member baru bulan ini memiliki expires_at tepat di (Bulan Ini + 3 Bulan)
+        $targetMonth = $today->copy()->addMonths(3)->month;
+        $targetYear = $today->copy()->addMonths(3)->year;
+
+        $totalMemberBaruBulanIni = User::where('membership_status', 'active')
+            ->whereMonth('membership_expires_at', $targetMonth)
+            ->whereYear('membership_expires_at', $targetYear)
+            ->count();
+
+        $pendapatanMembership = $totalMemberBaruBulanIni * 150000;
+        $totalPendapatanBulanIni = $totalPendapatanReservasi + $pendapatanMembership;
 
         $totalReservasiHariIni = Reservasi::whereDate('tanggal', $today)->count();
 
