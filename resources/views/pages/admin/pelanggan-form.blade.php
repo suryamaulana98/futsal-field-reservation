@@ -98,9 +98,36 @@
 
           <div class="col-12">
             <label class="form-label" for="pelangganPassword">Password</label>
-            <input class="form-control" id="pelangganPassword" name="password" type="password" {{ ($isEdit ?? false) ? '' : 'required' }} />
+            <div class="input-group">
+                <input class="form-control border-end-0" id="pelangganPassword" name="password" type="password" {{ ($isEdit ?? false) ? '' : 'required' }} />
+                <span class="input-group-text bg-white" style="cursor: pointer;" onclick="togglePassword('pelangganPassword', 'toggleIcon-pelangganPassword')">
+                    <i class="bi bi-eye-slash text-secondary" id="toggleIcon-pelangganPassword"></i>
+                </span>
+            </div>
             <small class="text-secondary">{{ ($isEdit ?? false) ? 'Kosongkan jika tidak ingin mengubah password.' : 'Minimal 6 karakter.' }}</small>
           </div>
+
+          @push('scripts')
+          <script>
+              function togglePassword(inputId, iconId) {
+                  const input = document.getElementById(inputId);
+                  const icon = document.getElementById(iconId);
+                  if (input.type === 'password') {
+                      input.type = 'text';
+                      icon.classList.remove('bi-eye-slash');
+                      icon.classList.add('bi-eye');
+                      icon.classList.remove('text-secondary');
+                      icon.classList.add('text-primary');
+                  } else {
+                      input.type = 'password';
+                      icon.classList.remove('bi-eye');
+                      icon.classList.add('bi-eye-slash');
+                      icon.classList.remove('text-primary');
+                      icon.classList.add('text-secondary');
+                  }
+              }
+          </script>
+          @endpush
           <div class="col-12 d-flex gap-2 flex-wrap">
             <button class="btn btn-accent" type="submit">Simpan Pelanggan</button>
             <a class="btn btn-outline-dark" href="{{ route('admin.pelanggan') }}">Batal</a>

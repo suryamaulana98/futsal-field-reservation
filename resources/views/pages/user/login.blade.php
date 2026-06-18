@@ -158,9 +158,36 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label fw-bold" for="loginPassword">Password</label>
-                            <input class="form-control form-control-lg" id="loginPassword" type="password" name="password"
-                                placeholder="Masukkan password" />
+                            <div class="input-group">
+                                <input class="form-control form-control-lg border-end-0" id="loginPassword" type="password" name="password"
+                                    placeholder="Masukkan password" />
+                                <span class="input-group-text bg-white" style="cursor: pointer;" onclick="togglePassword('loginPassword', 'toggleIcon-loginPassword')">
+                                    <i class="bi bi-eye-slash text-secondary" id="toggleIcon-loginPassword"></i>
+                                </span>
+                            </div>
                         </div>
+
+                        @push('scripts')
+                        <script>
+                            function togglePassword(inputId, iconId) {
+                                const input = document.getElementById(inputId);
+                                const icon = document.getElementById(iconId);
+                                if (input.type === 'password') {
+                                    input.type = 'text';
+                                    icon.classList.remove('bi-eye-slash');
+                                    icon.classList.add('bi-eye');
+                                    icon.classList.remove('text-secondary');
+                                    icon.classList.add('text-primary');
+                                } else {
+                                    input.type = 'password';
+                                    icon.classList.remove('bi-eye');
+                                    icon.classList.add('bi-eye-slash');
+                                    icon.classList.remove('text-primary');
+                                    icon.classList.add('text-secondary');
+                                }
+                            }
+                        </script>
+                        @endpush
                         <div class="col-12">
                             @if ($errors->any())
                                 <div class="alert alert-danger">

@@ -47,6 +47,8 @@ Route::middleware('auth')->group(function () {
         // Halaman Admin Reservasi
         Route::controller(\App\Http\Controllers\Admin\ReservasiController::class)->group(function () {
             Route::get('/reservasi', 'index')->name('admin.reservasi');
+            Route::get('/reservasi/create', 'create')->name('admin.reservasi.create');
+            Route::post('/reservasi/store', 'store')->name('admin.reservasi.store');
             Route::post('/reservasi/{id}/terima', 'terimaPembayaran')->name('admin.reservasi.terima');
             Route::post('/reservasi/{id}/tolak', 'tolakPembayaran')->name('admin.reservasi.tolak');
             Route::post('/reservasi/{id}/selesai', 'selesaikanReservasi')->name('admin.reservasi.selesai');

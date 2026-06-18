@@ -55,6 +55,11 @@ function hitungEstimasi() {
         if (total < 0) total = 0;
     }
 
+    // Jika member aktif, terapkan diskon 15% pada sisa harga
+    if (typeof window.MEMBER_DISCOUNT === 'boolean' && window.MEMBER_DISCOUNT && total > 0) {
+        total = Math.round(total * 0.85);
+    }
+
     return total;
 }
 

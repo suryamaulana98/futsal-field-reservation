@@ -48,7 +48,12 @@
       <section class="panel-box mb-4">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
           <h2 class="h5 mb-0">Validasi Pembayaran & Pembatalan</h2>
-          <span class="badge text-bg-dark">Kelola Reservasi</span>
+          <div>
+            <span class="badge text-bg-dark me-2">Kelola Reservasi</span>
+            <a href="{{ route('admin.reservasi.create') }}" class="btn btn-sm btn-primary">
+              <i class="bi bi-plus-circle me-1"></i> Tambah Reservasi Manual
+            </a>
+          </div>
         </div>
         <div class="table-responsive">
           <table class="table align-middle">
@@ -86,6 +91,8 @@
                         data-bs-file="{{ asset('storage/' . $r->bukti_pembayaran) }}">
                         Lihat Bukti
                       </button>
+                    @elseif($r->metode_pembayaran === 'Cash')
+                      <span class="badge text-bg-success">Cash</span>
                     @else
                       <span class="badge text-bg-light">Belum Upload</span>
                     @endif

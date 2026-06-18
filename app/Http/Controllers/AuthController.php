@@ -42,9 +42,12 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
             $user = Auth::user();
-            $redirectTo = $user && $user->role === 'admin' ? '/admin/dashboard' : '/reservasi';
+            
+            if ($user && $user->role === 'admin') {
+                return redirect('/admin/dashboard')->with('success', 'Login berhasil. Selamat datang! ' . $user->nama);
+            }
 
-            return redirect($redirectTo)->with(
+            return redirect()->intended('/reservasi')->with(
                 'success',
                 'Login berhasil. Selamat datang! ' . $user->nama
             );

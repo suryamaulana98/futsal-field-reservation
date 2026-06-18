@@ -61,6 +61,10 @@
                                                 <span class="badge bg-secondary">Sudah Digunakan</span>
                                             @endif
                                         </p>
+                                        <p class="mb-0 mt-1">
+                                            <b>Diskon 15%:</b>
+                                            <span class="badge bg-success">Aktif</span> — Otomatis diterapkan di setiap reservasi selama masa aktif.
+                                        </p>
                                     </div>
                                 @endif
                             @endif

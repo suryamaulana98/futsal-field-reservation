@@ -143,6 +143,12 @@
                 <th>Pemesanan Dibuat</th>
                 <td>{{ $reservasi->created_at->format('d M Y, H:i') }}</td>
             </tr>
+            @if($reservasi->discount_amount > 0)
+            <tr>
+                <th>Diskon Member (15%)</th>
+                <td style="color: #dc3545;">-Rp{{ number_format($reservasi->discount_amount, 0, ',', '.') }}</td>
+            </tr>
+            @endif
             <tr class="total-row">
                 <th>Total Pembayaran</th>
                 <td>Rp{{ number_format($reservasi->total_harga, 0, ',', '.') }}</td>

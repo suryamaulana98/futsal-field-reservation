@@ -148,14 +148,46 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold" for="registerPassword">Password</label>
-                            <input class="form-control form-control-lg" name="password" id="registerPassword"
-                                type="password" placeholder="Minimal 8 karakter" />
+                            <div class="input-group">
+                                <input class="form-control form-control-lg border-end-0" name="password" id="registerPassword"
+                                    type="password" placeholder="Minimal 8 karakter" />
+                                <span class="input-group-text bg-white" style="cursor: pointer;" onclick="togglePassword('registerPassword', 'toggleIcon-registerPassword')">
+                                    <i class="bi bi-eye-slash text-secondary" id="toggleIcon-registerPassword"></i>
+                                </span>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold" for="registerConfirm">Konfirmasi Password</label>
-                            <input class="form-control form-control-lg" name="password_confirmation" id="registerConfirm"
-                                type="password" placeholder="Ulangi password" />
+                            <div class="input-group">
+                                <input class="form-control form-control-lg border-end-0" name="password_confirmation" id="registerConfirm"
+                                    type="password" placeholder="Ulangi password" />
+                                <span class="input-group-text bg-white" style="cursor: pointer;" onclick="togglePassword('registerConfirm', 'toggleIcon-registerConfirm')">
+                                    <i class="bi bi-eye-slash text-secondary" id="toggleIcon-registerConfirm"></i>
+                                </span>
+                            </div>
                         </div>
+
+                        @push('scripts')
+                        <script>
+                            function togglePassword(inputId, iconId) {
+                                const input = document.getElementById(inputId);
+                                const icon = document.getElementById(iconId);
+                                if (input.type === 'password') {
+                                    input.type = 'text';
+                                    icon.classList.remove('bi-eye-slash');
+                                    icon.classList.add('bi-eye');
+                                    icon.classList.remove('text-secondary');
+                                    icon.classList.add('text-primary');
+                                } else {
+                                    input.type = 'password';
+                                    icon.classList.remove('bi-eye');
+                                    icon.classList.add('bi-eye-slash');
+                                    icon.classList.remove('text-primary');
+                                    icon.classList.add('text-secondary');
+                                }
+                            }
+                        </script>
+                        @endpush
                         <div class="col-md-12">
                             @if (session('success'))
                                 <div class="alert alert-success">

@@ -172,9 +172,9 @@
               </tr>
             </tbody>
           </table>
-          <div class="alert alert-info border-0 py-2 small">
-            <i class="bi bi-info-circle"></i> <strong>Member Aktif</strong> mendapatkan <strong>FREE 1 jam bermain</strong> (voucher sekali pakai) selama masa membership.
-          </div>
+            <div class="alert alert-info border-0 py-2 small">
+              <i class="bi bi-info-circle"></i> <strong>Member Aktif</strong> mendapatkan <strong>FREE 1 jam bermain</strong> (voucher sekali pakai) + <strong>Diskon 15%</strong> setiap reservasi selama masa membership.
+            </div>
         </div>
       </div>
     </section>
@@ -199,10 +199,11 @@
               </p>
               <ul class="list-unstyled d-grid gap-2 mb-3">
                 <li><i class="bi bi-check-circle-fill text-success"></i> Free 1 jam bermain (sekali pakai)</li>
+                <li><i class="bi bi-check-circle-fill text-success"></i> <strong>Diskon 15%</strong> setiap reservasi</li>
                 <li><i class="bi bi-check-circle-fill text-success"></i> Prioritas konfirmasi booking</li>
                 <li><i class="bi bi-check-circle-fill text-success"></i> Masa aktif 3 bulan</li>
               </ul>
-              <a href="{{ url('/reservasi') }}#membership-form" class="btn btn-accent w-100 rounded-pill">
+              <a href="{{ url('/reservasi?show_membership=1') }}" class="btn btn-accent w-100 rounded-pill">
                 Daftar Sekarang
               </a>
             </div>

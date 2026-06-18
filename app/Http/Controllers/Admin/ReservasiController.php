@@ -109,4 +109,104 @@ class ReservasiController extends Controller
 
         return redirect()->back()->with('success', 'Reservasi diselesaikan.');
     }
+
+    public function create()
+    {
+        $pelanggan = \App\Models\User::where('role', 'user')->get();
+        return view('pages.admin.reservasi-manual', compact('pelanggan'));
+    }
+
+    public function store(Request $request)
+    {
+        $validatedData = $request->validate([
+            'id_user' => 'required|exists:users,id',
+            'tanggal' => 'required|date',
+            'jam_mulai' => ['required', 'regex:/^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$|^24:00(:00)?$/'],
+            'jam_selesai' => ['required', 'regex:/^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$|^24:00(:00)?$/', 'after:jam_mulai'],
+            'catatan' => 'nullable|string|max:500',
+        ]);
+
+        $jamMulai = Carbon::parse($validatedData['jam_mulai']);
+        $jamSelesai = Carbon::parse($validatedData['jam_selesai']);
+
+        // CEK BENTROK JADWAL
+        $bentrok = Reservasi::where('tanggal', $validatedData['tanggal'])
+            ->whereNotIn('status', ['dibatalkan']) // Abaikan yang dibatalkan
+            ->where(function ($query) use ($jamMulai, $jamSelesai) {
+                $query->where(function ($q) use ($jamMulai, $jamSelesai) {
+                    $q->whereTime('jam_mulai', '<=', $jamMulai->format('H:i:s'))
+                        ->whereTime('jam_selesai', '>', $jamMulai->format('H:i:s'));
+                })
+                    ->orWhere(function ($q) use ($jamMulai, $jamSelesai) {
+                        $q->whereTime('jam_mulai', '<', $jamSelesai->format('H:i:s'))
+                            ->whereTime('jam_selesai', '>=', $jamSelesai->format('H:i:s'));
+                    })
+                    ->orWhere(function ($q) use ($jamMulai, $jamSelesai) {
+                        $q->whereTime('jam_mulai', '>=', $jamMulai->format('H:i:s'))
+                            ->whereTime('jam_mulai', '<', $jamSelesai->format('H:i:s'));
+                    });
+            })->exists();
+
+        if ($bentrok) {
+            return redirect()->back()->with('error', 'Maaf, lapangan sudah dibooking pada jam tersebut.');
+        }
+
+        $jamMulaiInt = (int) $jamMulai->format('H');
+        $jamSelesaiInt = (int) $jamSelesai->format('H');
+
+        $totalHarga = 0;
+        for ($jam = $jamMulaiInt; $jam < $jamSelesaiInt; $jam++) {
+            $totalHarga += ($jam < 17) ? 60000 : 70000;
+        }
+
+        // Cek diskon membership
+        $user = \App\Models\User::find($validatedData['id_user']);
+        $freeHourApplied = false;
+        $discountAmount = 0;
+
+        if ($user && $user->membership_status === 'active' && $user->status_member == '1') {
+            if ($user->membership_expires_at && Carbon::parse($user->membership_expires_at)->isFuture()) {
+                if (!$user->membership_free_hour_used) {
+                    $jamTerMahal = 0;
+                    for ($jam = $jamMulaiInt; $jam < $jamSelesaiInt; $jam++) {
+                        $hargaJam = ($jam < 17) ? 60000 : 70000;
+                        if ($hargaJam > $jamTerMahal) $jamTerMahal = $hargaJam;
+                    }
+                    $totalHarga -= $jamTerMahal;
+                    if ($totalHarga < 0) $totalHarga = 0;
+                    $freeHourApplied = true;
+                }
+                if ($totalHarga > 0) {
+                    $discountAmount = round($totalHarga * 0.15);
+                    $totalHarga -= $discountAmount;
+                }
+            } else {
+                $user->membership_status = 'expired';
+                $user->status_member = '0';
+                $user->save();
+            }
+        }
+
+        $reservasi = Reservasi::create([
+            'id_user' => $validatedData['id_user'],
+            'tanggal' => $validatedData['tanggal'],
+            'jam_mulai' => $validatedData['jam_mulai'],
+            'jam_selesai' => $validatedData['jam_selesai'],
+            'total_harga' => $totalHarga,
+            'discount_amount' => $discountAmount,
+            'status' => 'disetujui',
+            'metode_pembayaran' => 'Cash',
+            'catatan' => $validatedData['catatan'] ? $validatedData['catatan'] . ' (Manual via Admin)' : 'Manual via Admin',
+        ]);
+
+        if ($user && $user->membership_status === 'active' && $user->status_member == '1') {
+            $user->membership_last_booking_at = now();
+            if ($freeHourApplied) {
+                $user->membership_free_hour_used = true;
+            }
+            $user->save();
+        }
+
+        return redirect()->route('admin.reservasi')->with('success', 'Reservasi manual berhasil dibuat dan disetujui.');
+    }
 }

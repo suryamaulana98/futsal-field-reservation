@@ -32,7 +32,8 @@
         </div>
         <div class="col-6 col-lg-3">
           <article class="admin-stat-card border-left-info shadow-sm bg-white p-4 rounded-3 text-center">
-            <h6 class="text-secondary mb-2">Pendapatan Bulan Ini</h6>
+            <h6 class="text-secondary mb-0">Pendapatan Bulan Ini</h6>
+            <small class="d-block text-muted mb-2" style="font-size: 0.75rem;">(Reservasi & Membership)</small>
             <h2 class="mb-0 fw-bold text-primary">Rp{{ number_format($totalPendapatanBulanIni, 0, ',', '.') }}</h2>
           </article>
         </div>
@@ -40,7 +41,10 @@
 
       <section class="panel-box bg-white p-4 rounded-3 border shadow-sm mt-4">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-          <h3 class="h5 mb-0">Aktivitas Reservasi Terbaru</h3>
+          <h3 class="h5 mb-0 d-flex align-items-center">
+            Aktivitas Reservasi Terbaru 
+            <span class="badge bg-light text-secondary border ms-2" style="font-size: 0.75rem;">5 Data Terakhir</span>
+          </h3>
           <a class="btn btn-sm btn-outline-dark" href="{{ url('/admin/reservasi') }}">
             Buka Kelola Reservasi
           </a>
